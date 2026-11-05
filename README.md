@@ -4,6 +4,8 @@
 
 纯静态页面，零依赖，数据只存在你自己的浏览器里。
 
+**在线地址：<https://a1ether.github.io/LittleMotivation/>**（手机、公司电脑随时打开）
+
 ## 它长什么样
 
 - **今日已赚**：按秒刷新，精确到分以下两位（显示 ¥1,234.56 + 后两位跳动）
@@ -15,7 +17,7 @@
 
 ## 使用
 
-打开 `index.html` 即可。或访问 GitHub Pages 部署的地址。
+打开 `index.html` 即可。或访问 <https://a1ether.github.io/LittleMotivation/>。
 
 首次打开点「设置」填自己的月薪：
 
