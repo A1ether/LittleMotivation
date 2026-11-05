@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>上班动力看板</title>
+<meta name="description" content="按月薪实时计算今日已赚，把上班变成一场看得见的小确幸收集。">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#0a0b0d">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">¥</span>
+      <div class="brand-text">
+        <h1>上班动力看板</h1>
+        <p>每一秒，都算数</p>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <time class="now" id="nowLabel">—</time>
+      <div class="tools">
+        <button id="privacyBtn" class="icon-btn" type="button" aria-pressed="false" title="遮一遮（快捷键 B）" aria-label="遮一遮">
+          <svg class="i-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="2.8"/></svg>
+          <svg class="i-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.7A11 11 0 0 1 12 5.5c6.4 0 10 6.5 10 6.5a19 19 0 0 1-3.2 4"/><path d="M6.4 6.9A19 19 0 0 0 2 12s3.6 6.5 10 6.5a10.9 10.9 0 0 0 4.1-.8"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+        </button>
+        <button id="themeBtn" class="icon-btn" type="button" title="切换深浅色" aria-label="切换深浅色">
+          <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/></svg>
+          <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z"/></svg>
+        </button>
+        <button id="settingsBtn" class="btn-ghost" type="button">设置</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="hero">
+      <div class="hero-top">
+        <span class="eyebrow" id="heroLabel">今日已赚 · 实时</span>
+        <span class="live" id="liveBadge"><i aria-hidden="true"></i><span id="liveText">进行中</span></span>
+      </div>
+
+      <div class="amount" id="amount" aria-label="今日已赚">
+        <span class="cur">¥</span><span class="int" id="amtInt">0</span><span class="dec" id="amtDec">.00</span><span class="dec2" id="amtDec2">00</span>
+      </div>
+
+      <p class="rates" id="rates">时薪 ¥— · 分薪 ¥— · 秒薪 ¥—</p>
+
+      <div class="progress">
+        <div class="bar" role="progressbar" aria-label="今日工作进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar">
+          <div class="bar-fill" id="barFill"></div>
+        </div>
+        <div class="bar-labels">
+          <span id="labelStart">—</span>
+          <span class="pct" id="pct">0%</span>
+          <span id="labelEnd">—</span>
+        </div>
+      </div>
+
+      <div class="hero-foot">
+        <div class="foot-item">
+          <span class="k" id="countdownKey">距下班</span>
+          <span class="v mono" id="countdown">—</span>
+        </div>
+        <div class="foot-item">
+          <span class="k">已工作</span>
+          <span class="v" id="worked">—</span>
+        </div>
+        <div class="foot-item">
+          <span class="k">今日目标</span>
+          <span class="v" id="goal">¥—</span>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <p class="status" id="status">正在读取时间…</p>
+        <button class="btn-ghost btn-sm" id="forceBtn" type="button" hidden>今天也上班 →</button>
+      </div>
+    </section>
+
+    <section class="card rewards">
+      <div class="card-head">
+        <div>
+          <h2>今天的小确幸</h2>
+          <p>每赚够一件，就点亮一个</p>
+        </div>
+        <span class="badge" id="rwCount">已点亮 0 件</span>
+      </div>
+      <ul class="rw-grid" id="rwGrid"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>数据只保存在这台设备的浏览器里，不上传任何服务器。</p>
+    <p class="keys"><kbd>S</kbd> 设置 · <kbd>B</kbd> 遮一遮</p>
+  </footer>
+</div>
+
+<dialog class="sheet" id="settingsDialog" aria-labelledby="sheetTitle">
+  <form method="dialog" class="sheet-body">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">算钱方式</h2>
+      <p>改完立刻生效，只存在本地</p>
+    </div>
+
+    <label class="field">
+      <span>月薪（元）</span>
+      <input id="fSalary" type="number" min="0" step="100" inputmode="decimal" autocomplete="off">
+    </label>
+
+    <label class="field">
+      <span>每月工作日</span>
+      <input id="fDays" type="number" min="1" max="31" step="0.5" inputmode="decimal" autocomplete="off">
+    </label>
+
+    <div class="field-row">
+      <label class="field">
+        <span>上班时间</span>
+        <input id="fStart" type="time">
+      </label>
+      <label class="field">
+        <span>下班时间</span>
+        <input id="fEnd" type="time">
+      </label>
+    </div>
+
+    <label class="switch">
+      <input type="checkbox" id="fOvertime">
+      <span class="switch-track" aria-hidden="true"></span>
+      <span class="switch-text">下班后继续计薪（加班）</span>
+    </label>
+
+    <label class="switch">
+      <input type="checkbox" id="fForce">
+      <span class="switch-track" aria-hidden="true"></span>
+      <span class="switch-text">今天也上班（休息日计薪）</span>
+    </label>
+
+    <p class="hint" id="cfgHint">—</p>
+
+    <div class="sheet-actions">
+      <button type="button" id="resetBtn" class="btn-ghost">恢复默认</button>
+      <button type="submit" class="btn-primary">完成</button>
+    </div>
+  </form>
+</dialog>
+
+<noscript><p class="noscript">这个看板需要 JavaScript 才能实时计算。</p></noscript>
+<script src="app.js"></script>
+</body>
+</html>
