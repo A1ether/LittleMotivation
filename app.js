@@ -8,13 +8,13 @@
 (() => {
   'use strict';
 
-  const STORAGE_KEY = 'little-motivation:config:v1';
+  const STORAGE_KEY = 'little-motivation:config:v2';
 
   const DEFAULTS = {
-    salary: 10000,      // 月薪（元）
-    workDays: 21.75,    // 每月工作日（法定平均 21.75）
-    start: '09:30',     // 上班
-    end: '18:30',       // 下班
+    salary: 8000,       // 月薪（元）
+    workDays: 22,       // 每月工作日（法定平均 21.75，这里取 22）
+    start: '09:00',     // 上班
+    end: '17:00',       // 下班
     overtime: false,    // 下班后继续计薪
     forceWorkToday: false,
     theme: '',          // '' = 跟随系统
@@ -55,6 +55,7 @@
     countdownKey: $('countdownKey'),
     countdown: $('countdown'),
     worked: $('worked'),
+    remaining: $('remaining'),
     goal: $('goal'),
     status: $('status'),
     forceBtn: $('forceBtn'),
@@ -180,6 +181,7 @@
       perSecond: ps,
       pct: 0,
       earned: 0,
+      remaining: 0,
       mode: 'off',
       status: '',
       countdownKey: '—',
@@ -197,9 +199,10 @@
 
     if (t < start) {
       base.mode = 'before';
+      base.remaining = d;
       base.countdownKey = '距开工';
       base.countdown = hms(start - t);
-      base.status = `还没开工，先享受 ${hms(start - t)} 的自由`;
+      base.status = '还没开工，先给自己泡杯咖啡 ☕';
       return base;
     }
 
@@ -212,19 +215,24 @@
       base.mode = 'working';
       base.countdownKey = '距下班';
       base.countdown = hms(end - t);
-      const remain = (end - t) / 1000 * ps;
-      base.status = `再撑 ${hms(end - t)}，还有 ¥${remain.toFixed(2)} 在路上`;
+      base.remaining = Math.max(0, d - base.earned);
+      base.status =
+        base.pct < 0.15 ? '刚开工，别急，钱在慢慢来'
+        : base.pct < 0.45 ? '节奏不错，钱在稳稳地到账'
+        : base.pct < 0.75 ? '已经过半，下午的时间最值钱'
+        : '冲刺阶段，收工就在眼前';
     } else {
       base.mode = 'after';
       base.countdownKey = '今日状态';
       base.countdown = '已下班';
-      base.status = `今天收工，进账 ¥${d.toFixed(2)}，去买点什么吧`;
+      base.remaining = 0;
+      base.status = '今天收工，辛苦啦，明天继续';
 
       if (cfg.overtime) {
         const extra = (t - end) / 1000 * ps;
         base.earned = d + extra;
         base.countdown = `加班 ${hms(t - end)}`;
-        base.status = `加班 ${hms(t - end)}，额外进账 ¥${extra.toFixed(2)}`;
+        base.status = '下班了还在赚，记得喝口水';
       }
     }
 
@@ -240,11 +248,6 @@
     return h > 0
       ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
       : `${m}:${String(s).padStart(2, '0')}`;
-  }
-
-  /** 遮一遮时把文案里的金额也替换掉 */
-  function maskMoney(text) {
-    return text.replace(/¥[\d,]+(\.\d+)?/g, '¥•••');
   }
 
   // ── 渲染 ─────────────────────────────────────────────
@@ -283,9 +286,10 @@
       li.className = 'rw';
       li.innerHTML = `
         <span class="rw-ico" aria-hidden="true">${m.ico}</span>
-        <span class="rw-name">${m.name}</span>
-        <span class="rw-price">¥${m.price}</span>
-        <span class="rw-next"><span class="track"><span class="fill"></span></span><span class="gap">—</span></span>
+        <span class="rw-body">
+          <span class="rw-line"><span class="rw-name">${m.name}</span><span class="rw-price">¥${m.price}</span></span>
+          <span class="rw-next"><span class="track"><span class="fill"></span></span><span class="gap">—</span></span>
+        </span>
       `;
       el.rwGrid.appendChild(li);
     }
@@ -319,7 +323,9 @@
       node.classList.toggle('is-on', isOn);
       node.classList.toggle('is-next', isNext);
 
-      if (!isOn) {
+      if (isOn) {
+        gap.textContent = '已点亮';
+      } else {
         gap.textContent = cfg.masked
           ? '还差 ¥•••'
           : `还差 ¥${(m.price - earned).toFixed(2)}`;
@@ -367,8 +373,10 @@
     setText(el.countdownKey, 'countdownKey', m.countdownKey);
     setText(el.countdown, 'countdown', m.countdown);
     setText(el.worked, 'worked', m.mode === 'before' || m.mode === 'off' ? '—' : m.worked);
+    setText(el.remaining, 'remaining',
+      m.mode === 'off' ? '—' : cfg.masked ? '•••' : `¥${fmt2.format(m.remaining)}`);
     setText(el.goal, 'goal', cfg.masked ? '•••' : `¥${fmt2.format(m.perDay)}`);
-    setText(el.status, 'status', cfg.masked ? maskMoney(m.status) : m.status);
+    setText(el.status, 'status', m.status);
 
     const isRest = !isWorkday(startOfDay(now));
     el.forceBtn.hidden = !isRest;
